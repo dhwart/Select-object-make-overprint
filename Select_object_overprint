@@ -1,0 +1,88 @@
+#target illustrator
+/*
+//选择对象制作叠印
+//Select_object_overprint 
+//Select an object to make an overprint
+//按选择的对象填充自定义专色、移动到新建层并制作叠印效果。
+//Fill the selected object with a custom spot color, move to a new layer, and create an overprint effect.
+//by Dhwart
+*/
+var doc = app.activeDocument;
+var items = doc.selection;
+
+//创建CMYK颜色
+var cmykCol = new CMYKColor();
+cmykCol.cyan = 0;
+cmykCol.magenta = 100;
+cmykCol.yellow = 0;
+cmykCol.black = 0;
+var newSpotColorName = "UV"; //指定专色名称
+var newlayers = "UV";//新建图层的名称
+try {
+	var findColor = doc.swatches.getByName(newSpotColorName); //查找专色
+	var newSpotColor = findColor.color; //获取专色
+} catch(err) {
+	var thisSpot = doc.spots.add(); //创建专色
+	thisSpot.name = newSpotColorName; //指定名称
+	thisSpot.color = cmykCol; //指定颜色
+	thisSpot.colorType = ColorModel.SPOT; //专色样式
+	var newSpotColor = doc.swatches.getByName(newSpotColorName).color; //获取专色
+}
+
+try {
+	var UvLayer = doc.layers[newlayers];
+	UvLayer.locked = false;
+	UvLayer.visible = true;
+} catch(err) {
+	var UvLayer = doc.layers.add();
+	UvLayer.name = newlayers;
+}
+
+for (var i = items.length - 1; i >= 0; i--) {
+	items[i].move(UvLayer, ElementPlacement.PLACEATBEGINNING); //移动到新图层
+	
+	if (items[i].typename == "PathItem") getFile(items[i], 0);
+	else if (items[i].typename == "CompoundPathItem") getFile(items[i], 1);
+	else if (items[i].typename == "GroupItem" || items[i].clipped) getFile(items[i], 2);
+	else if (items[i].typename == "TextFrame") getFile(items[i], 3);
+}
+
+function getFile(items, arr) {
+	switch (arr) {
+	case 0:
+		items.fillColor = newSpotColor; //填充色
+		items.fillOverprint = true; //叠印
+		items.strokeColor = newSpotColor; //描边色
+		items.strokeOverprint = true; //描边叠印 
+		break;
+
+	case 1:
+		for (var e = 0; e < items.pathItems.length; e += 1) {
+			items.pathItems[e].strokeColor = newSpotColor;
+			items.pathItems[e].strokeOverprint = true;
+			if (items.pathItems[e].filled) {
+				items.pathItems[e].fillColor = newSpotColor;
+				items.pathItems[e].fillOverprint = true;
+			}
+		}
+		break;
+
+	case 2:
+		for (var e = 0; e < items.pageItems.length; e += 1) {
+			items.pageItems[e].fillColor = newSpotColor;
+			items.pageItems[e].fillOverprint = true;
+			if (items.pageItems[e].stroked) {
+				items.pageItems[e].strokeColor = newSpotColor;
+				items.pageItems[e].strokeOverprint = true;
+			}
+		}
+		break;
+
+	case 3:
+		items.textRange.characterAttributes.fillColor = newSpotColor; //填充色
+		items.textRange.characterAttributes.overprintFill = true; //叠印
+		//items.textRange.characterAttributes.strokeColor = newSpotColor; //描边色
+		//items.textRange.characterAttributes.overprintStroke = true; //描边叠印 
+		break;
+	}
+}
