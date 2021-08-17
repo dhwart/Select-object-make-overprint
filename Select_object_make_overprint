@@ -1,7 +1,7 @@
 #target illustrator
 /*
 //选择对象制作叠印
-//Select_object_overprint 
+//Select_object_make_overprint 
 //Select an object to make an overprint
 //按选择的对象填充自定义专色、移动到新建层并制作叠印效果。
 //Fill the selected object with a custom spot color, move to a new layer, and create an overprint effect.
